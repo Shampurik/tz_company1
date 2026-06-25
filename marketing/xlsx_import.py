@@ -44,7 +44,6 @@ def import_mailing_messages(
     file_path: str | Path,
     *,
     sheet_name: str | None = None,
-    send_countdown: int = 0,
 ) -> ImportStats:
     stats = ImportStats()
 
@@ -52,7 +51,7 @@ def import_mailing_messages(
         stats.processed_rows += 1
         try:
             mailing_row = validate_mailing_row(row_data)
-            created = create_mailing_message(mailing_row, send_countdown=send_countdown)
+            created = create_mailing_message(mailing_row)
         except RowValidationError:
             stats.error_rows += 1
             continue
@@ -127,7 +126,7 @@ def validate_mailing_row(row_data: dict[str, object]) -> MailingRow:
     )
 
 
-def create_mailing_message(mailing_row: MailingRow, *, send_countdown: int = 0) -> bool:
+def create_mailing_message(mailing_row: MailingRow) -> bool:
     user_model = get_user_model()
     try:
         user = user_model.objects.get(pk=mailing_row.user_id)
@@ -146,7 +145,6 @@ def create_mailing_message(mailing_row: MailingRow, *, send_countdown: int = 0) 
             transaction.on_commit(
                 lambda message_id=mailing_message.pk: send_mailing_message.apply_async(
                     args=[message_id],
-                    countdown=send_countdown,
                 )
             )
     except IntegrityError:

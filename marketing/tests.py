@@ -215,12 +215,12 @@ class MailingImportCommandTests(TransactionTestCase):
 
             stdout = StringIO()
             with patch("marketing.xlsx_import.send_mailing_message.apply_async") as apply_async:
-                call_command("import_mailings", str(file_path), "--countdown=7", stdout=stdout)
+                call_command("import_mailings", str(file_path), stdout=stdout)
 
         self.assertEqual(MailingMessage.objects.count(), 1)
         mailing_message = MailingMessage.objects.get(external_id="ext-1")
         self.assertEqual(mailing_message.email, "customer@example.com")
-        apply_async.assert_called_once_with(args=[mailing_message.id], countdown=7)
+        apply_async.assert_called_once_with(args=[mailing_message.id])
         self.assertIn("Processed rows: 4", stdout.getvalue())
         self.assertIn("Created records: 1", stdout.getvalue())
         self.assertIn("Skipped records: 1", stdout.getvalue())
@@ -235,13 +235,20 @@ class MailingImportCommandTests(TransactionTestCase):
             message="Delayed hello",
         )
 
-        with self.assertLogs("marketing.tasks", level="INFO") as captured_logs:
+        with (
+            patch("marketing.tasks.random.randint", return_value=5) as randint,
+            patch("marketing.tasks.time.sleep") as sleep,
+            self.assertLogs("marketing.tasks", level="INFO") as captured_logs,
+        ):
             send_mailing_message(mailing_message.id)
 
         mailing_message.refresh_from_db()
         self.assertEqual(mailing_message.status, MailingMessage.Status.SENT)
         self.assertIsNotNone(mailing_message.sent_at)
-        self.assertIn("Delayed email to customer@example.com", captured_logs.output[0])
+        randint.assert_called_once_with(5, 20)
+        sleep.assert_called_once_with(5)
+        self.assertIn("Simulating email service delay", captured_logs.output[0])
+        self.assertIn("Delayed email to customer@example.com", captured_logs.output[1])
 
     def _create_xlsx(self, file_path: Path, rows: list[list[object]]) -> None:
         workbook = Workbook()

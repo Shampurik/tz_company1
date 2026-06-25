@@ -194,7 +194,7 @@ celery -A config worker -l info --pool=solo
 Во втором терминале запустите импорт:
 
 ```bash
-python manage.py import_mailings fixtures/mailings_import_sample.xlsx --countdown 5
+python manage.py import_mailings fixtures/mailings_import_sample.xlsx
 ```
 
 Ожидаемый результат первого запуска:
@@ -206,7 +206,9 @@ Skipped records: 1
 Error rows: 2
 ```
 
-Через 5 секунд Celery worker запишет отправку писем в лог. Для упрощения задачи реальная отправка email не выполняется: Celery-задача логирует сообщение и помечает запись как отправленную.
+Celery worker запишет отправку писем в лог после случайной задержки от 5 до 20 секунд. Эта задержка имитирует время, которое почтовый сервис тратит на отправку письма.
+
+Для упрощения задачи реальная отправка email не выполняется: Celery-задача логирует сообщение и помечает запись как отправленную.
 
 Повторный запуск того же файла должен показать, что уже импортированные `external_id` не создаются повторно.
 
@@ -223,16 +225,11 @@ CELERY_RESULT_BACKEND=redis://localhost:6379/1
 
 На Windows локальный filesystem broker требует пакет `pywin32`. Он уже добавлен в `requirements.txt` с Windows-only marker.
 
-Задержка отправки по умолчанию задается переменной:
+Диапазон случайной задержки отправки задается переменными:
 
 ```bash
-MARKETING_EMAIL_SEND_DELAY_SECONDS=5
-```
-
-Также задержку можно передать при запуске команды:
-
-```bash
-python manage.py import_mailings fixtures/mailings_import_sample.xlsx --countdown 10
+MARKETING_EMAIL_SEND_DELAY_MIN_SECONDS=5
+MARKETING_EMAIL_SEND_DELAY_MAX_SECONDS=20
 ```
 
 ## Тесты

@@ -1,6 +1,9 @@
 import logging
+import random
+import time
 
 from celery import shared_task
+from django.conf import settings
 from django.utils import timezone
 
 from marketing.models import MailingMessage
@@ -17,6 +20,16 @@ def send_mailing_message(self, message_id: int) -> None:
         return
 
     try:
+        delay_seconds = random.randint(
+            settings.MARKETING_EMAIL_SEND_DELAY_MIN_SECONDS,
+            settings.MARKETING_EMAIL_SEND_DELAY_MAX_SECONDS,
+        )
+        logger.info(
+            "Simulating email service delay for mailing message %s: %s seconds.",
+            mailing_message.id,
+            delay_seconds,
+        )
+        time.sleep(delay_seconds)
         logger.info(
             "Delayed email to %s for user_id=%s. Subject: %s. Message: %s",
             mailing_message.email,
