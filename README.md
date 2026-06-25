@@ -163,3 +163,4 @@ celery -A config worker -l info --pool=solo
 ```
 
 By default the project uses Celery filesystem broker folders under `celery_broker/` for local development. For production-like environments set `CELERY_BROKER_URL`, for example to Redis.
+On Windows the local filesystem broker requires `pywin32`; it is included in `requirements.txt` with a Windows-only marker.
