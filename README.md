@@ -89,12 +89,21 @@ Content-Type: application/json
 }
 ```
 
-Пример запроса через `curl` для Windows PowerShell:
+Пример запроса через `curl`:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/api/v1/orders/ ^
-  -H "Content-Type: application/json" ^
-  -d "{\"user_id\":1,\"goods\":[{\"good_id\":1,\"quantity\":2}],\"promo_code\":\"SUMMER2025\"}"
+curl -X POST http://127.0.0.1:8000/api/v1/orders/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": 1,
+    "goods": [
+      {
+        "good_id": 1,
+        "quantity": 2
+      }
+    ],
+    "promo_code": "SUMMER2025"
+  }'
 ```
 
 ## Правила применения промокода
