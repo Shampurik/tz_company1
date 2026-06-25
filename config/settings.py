@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -83,6 +84,30 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+CELERY_BROKER_DIR = BASE_DIR / "celery_broker"
+CELERY_BROKER_IN_DIR = CELERY_BROKER_DIR / "in"
+CELERY_BROKER_OUT_DIR = CELERY_BROKER_DIR / "out"
+CELERY_BROKER_PROCESSED_DIR = CELERY_BROKER_DIR / "processed"
+for celery_dir in (CELERY_BROKER_IN_DIR, CELERY_BROKER_OUT_DIR, CELERY_BROKER_PROCESSED_DIR):
+    celery_dir.mkdir(parents=True, exist_ok=True)
+
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "filesystem://")
+CELERY_BROKER_TRANSPORT_OPTIONS = {}
+if CELERY_BROKER_URL == "filesystem://":
+    CELERY_BROKER_TRANSPORT_OPTIONS = {
+        "data_folder_in": str(CELERY_BROKER_IN_DIR),
+        "data_folder_out": str(CELERY_BROKER_IN_DIR),
+        "processed_folder": str(CELERY_BROKER_PROCESSED_DIR),
+    }
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "cache+memory://")
+CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "").lower() in {
+    "1",
+    "true",
+    "yes",
+}
+
+MARKETING_EMAIL_SEND_DELAY_SECONDS = int(os.getenv("MARKETING_EMAIL_SEND_DELAY_SECONDS", "5"))
 
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [

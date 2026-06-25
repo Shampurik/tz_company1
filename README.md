@@ -129,3 +129,37 @@ python3 manage.py test
 ```bash
 python3 manage.py makemigrations --check --dry-run
 ```
+
+## Mailing XLSX import
+
+The `marketing` app supports delayed email mailing import from XLSX files.
+
+Input file columns:
+
+- `external_id` - unique external record id used for idempotency.
+- `user_id` - recipient user id.
+- `email` - recipient email.
+- `subject` - email subject.
+- `message` - email body.
+
+Run import:
+
+```bash
+python manage.py import_mailings path/to/mailings.xlsx
+```
+
+Optional parameters:
+
+```bash
+python manage.py import_mailings path/to/mailings.xlsx --sheet Sheet1 --countdown 10
+```
+
+The command reads XLSX rows in streaming mode with `openpyxl` `read_only=True`, creates only new `MailingMessage` records, skips already imported `external_id` values, and schedules delayed Celery tasks.
+
+Local worker example:
+
+```bash
+celery -A config worker -l info --pool=solo
+```
+
+By default the project uses Celery filesystem broker folders under `celery_broker/` for local development. For production-like environments set `CELERY_BROKER_URL`, for example to Redis.
